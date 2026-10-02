@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — QuantumShield</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; }
+  h1, h2, h3, label { font-family: 'Sora', sans-serif; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .left-panel {
+    width: 45%;
+    background: linear-gradient(145deg, #0f3460 0%, #0a4a8a 50%, #0284c7 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 52px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .left-panel::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(56,189,248,0.2) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .left-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .right-panel {
+    width: 55%;
+    background: #f0f9ff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 48px 56px;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 380px;
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  .input-group { margin-bottom: 18px; }
+
+  .input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #0f3460;
+    margin-bottom: 6px;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #e0f2fe;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    color: #0f3460;
+    background: white;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input-group input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56,189,248,0.12);
+  }
+
+  .input-group input::placeholder { color: #94a3b8; }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    color: white;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 16px rgba(14,165,233,0.3);
+    margin-top: 6px;
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.4); }
+  .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+  .alert { padding: 11px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; display: none; }
+  .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+  .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+
+  .password-wrap { position: relative; }
+  .password-wrap input { padding-right: 42px; }
+
+  .toggle-pass {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; color: #94a3b8; background: none; border: none; padding: 4px;
+    display: flex; align-items: center;
+  }
+  .toggle-pass:hover { color: #0ea5e9; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-top: 48px;
+  }
+
+  .stat-box {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="left-panel">
+  <div style="position:relative;z-index:1;">
+    <a href="/" style="display:inline-flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:52px;">
+      <div style="width:34px;height:34px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:9px;display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <span style="font-family:'Sora',sans-serif;font-weight:700;font-size:18px;color:white;">QuantumShield</span>
+    </a>
+
+    <h2 style="font-size:28px;color:white;line-height:1.35;margin-bottom:14px;">Your network security dashboard awaits</h2>
+    <p style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.75;margin-bottom:20px;">Sign in to access live monitoring, blockchain ledger, threat analysis, and full system control.</p>
+
+    <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:20px;margin-bottom:0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="width:8px;height:8px;background:#22c55e;border-radius:50%;"></div>
+        <span style="font-family:'Sora',sans-serif;font-size:13px;color:rgba(255,255,255,0.8);font-weight:500;">System Status — All services operational</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:rgba(255,255,255,0.55);">QML Detection Engine</span>
+          <span style="font-size:12px;font-family:'Sora',sans-serif;color:#38bdf8;background:rgba(56,189,248,0.15);padding:3px 10px;border-radius:20px;">Active</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:rgba(255,255,255,0.55);">Blockchain Ledger</span>
+          <span style="font-size:12px;font-family:'Sora',sans-serif;color:#38bdf8;background:rgba(56,189,248,0.15);padding:3px 10px;border-radius:20px;">Connected</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:rgba(255,255,255,0.55);">Email Alert Service</span>
+          <span style="font-size:12px;font-family:'Sora',sans-serif;color:#38bdf8;background:rgba(56,189,248,0.15);padding:3px 10px;border-radius:20px;">Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:#38bdf8;">98.48%</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:3px;">Binary Acc</div>
+      </div>
+      <div class="stat-box">
+        <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:#38bdf8;">4</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:3px;">Qubits</div>
+      </div>
+      <div class="stat-box">
+        <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:#38bdf8;">100%</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:3px;">Immutable</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="form-card">
+    <div style="margin-bottom:32px;">
+      <h2 style="font-size:24px;color:#0f3460;margin-bottom:6px;">Welcome back</h2>
+      <p style="font-size:14px;color:#64748b;">Sign in to your QuantumShield dashboard</p>
+    </div>
+
+    <div class="alert alert-error" id="errorAlert"></div>
+    <div class="alert alert-success" id="successAlert"></div>
+
+    <div class="input-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Enter your username" autocomplete="username">
+    </div>
+
+    <div class="input-group">
+      <label>Password</label>
+      <div class="password-wrap">
+        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+        <button class="toggle-pass" onclick="togglePass(this)" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="loginBtn" onclick="handleLogin()">Sign In</button>
+
+    <p style="text-align:center;margin-top:22px;font-size:13px;color:#64748b;">
+      Don't have an account?
+      <a href="/signup" style="color:#0284c7;font-weight:500;text-decoration:none;margin-left:4px;">Create one</a>
+    </p>
+    <p style="text-align:center;margin-top:10px;font-size:13px;">
+      <a href="/" style="color:#94a3b8;text-decoration:none;">Back to home</a>
+    </p>
+  </div>
+</div>
+
+<script>
+  function togglePass(btn) {
+    const input = document.getElementById('password');
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    } else {
+      input.type = 'password';
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorAlert');
+    el.textContent = msg; el.style.display = 'block';
+    document.getElementById('successAlert').style.display = 'none';
+  }
+
+  function showSuccess(msg) {
+    const el = document.getElementById('successAlert');
+    el.textContent = msg; el.style.display = 'block';
+    document.getElementById('errorAlert').style.display = 'none';
+  }
+
+  async function handleLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('loginBtn');
+
+    if (!username || !password) { showError('Username and password are required.'); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username);
+        showSuccess('Login successful. Redirecting...');
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
+      } else {
+        showError(data.message || 'Invalid credentials.');
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    } catch (e) {
+      showError('Unable to connect to server.');
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  }
+
+  document.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+</script>
+</body>
+</html>

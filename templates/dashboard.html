@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — QuantumShield</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #f0f9ff; color: #0f3460; display: flex; min-height: 100vh; }
+  h1, h2, h3, h4 { font-family: 'Sora', sans-serif; }
+
+  .sidebar { width: 240px; min-height: 100vh; background: linear-gradient(180deg, #0f3460 0%, #0a2540 100%); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+  .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px; }
+  .sidebar-logo span { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 16px; color: white; }
+  .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; color: rgba(255,255,255,0.55); font-size: 14px; font-weight: 400; transition: all 0.2s; border: none; background: none; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+  .nav-item.active { background: rgba(56,189,248,0.15); color: #38bdf8; font-weight: 500; }
+  .nav-item.active svg { stroke: #38bdf8; }
+  .nav-section-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.25); letter-spacing: 0.08em; text-transform: uppercase; padding: 12px 12px 6px; font-family: 'Sora', sans-serif; }
+  .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .logout-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; color: rgba(255,255,255,0.45); font-size: 14px; transition: all 0.2s; border: none; background: none; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; }
+  .logout-btn:hover { background: rgba(239,68,68,0.12); color: #f87171; }
+
+  .main-content { margin-left: 240px; flex: 1; padding: 32px; min-height: 100vh; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .page-title { font-size: 22px; font-weight: 600; color: #0f3460; }
+  .page-sub { font-size: 13px; color: #64748b; margin-top: 2px; }
+  .user-badge { display: flex; align-items: center; gap: 10px; background: white; border: 1px solid rgba(56,189,248,0.2); border-radius: 10px; padding: 8px 14px; }
+  .user-avatar { width: 30px; height: 30px; background: linear-gradient(135deg, #0ea5e9, #38bdf8); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; color: white; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: white; border-radius: 14px; padding: 20px; border: 1px solid rgba(56,189,248,0.15); box-shadow: 0 2px 12px rgba(14,165,233,0.05); }
+  .stat-label { font-size: 12px; color: #64748b; margin-bottom: 8px; font-weight: 500; }
+  .stat-value { font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 700; color: #0f3460; }
+  .stat-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+
+  .card { background: white; border-radius: 14px; border: 1px solid rgba(56,189,248,0.15); box-shadow: 0 2px 12px rgba(14,165,233,0.05); }
+  .card-header { padding: 18px 20px; border-bottom: 1px solid #f0f9ff; display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600; color: #0f3460; }
+  .card-body { padding: 20px; }
+
+  .btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: 'Sora', sans-serif; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: white; box-shadow: 0 3px 10px rgba(14,165,233,0.25); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14,165,233,0.35); }
+  .btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .btn-danger:hover { background: #fee2e2; }
+  .btn-outline { background: white; color: #0284c7; border: 1px solid #e0f2fe; }
+  .btn-outline:hover { background: #f0f9ff; border-color: #38bdf8; }
+
+  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'Sora', sans-serif; }
+  .badge-attack { background: #fef2f2; color: #dc2626; }
+  .badge-normal { background: #f0fdf4; color: #16a34a; }
+  .badge-connected { background: rgba(56,189,248,0.12); color: #0284c7; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f0f9ff; font-family: 'Sora', sans-serif; }
+  td { padding: 12px 14px; font-size: 13px; color: #334155; border-bottom: 1px solid #f8fbff; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fbff; }
+
+  .input-field { width: 100%; padding: 10px 13px; border: 1.5px solid #e0f2fe; border-radius: 9px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: #0f3460; background: #f8fbff; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  .input-field:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,0.1); background: white; }
+  .form-label { display: block; font-size: 13px; font-weight: 500; color: #0f3460; margin-bottom: 6px; font-family: 'Sora', sans-serif; }
+  .form-group { margin-bottom: 16px; }
+
+  .alert-popup { position: fixed; top: 24px; right: 24px; z-index: 9999; max-width: 360px; background: white; border-radius: 14px; padding: 16px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); border-left: 4px solid #dc2626; display: none; animation: slideIn 0.3s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+  .pulse-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; position: relative; }
+  .pulse-dot::after { content: ''; position: absolute; inset: -4px; background: rgba(34,197,94,0.3); border-radius: 50%; animation: pulse 2s ease-out infinite; }
+  @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.7; } 70% { transform: scale(1.4); opacity: 0; } 100% { transform: scale(0.9); opacity: 0; } }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+
+  .stream-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 9px; margin-bottom: 6px; font-size: 13px; background: #f8fbff; border: 1px solid #e0f2fe; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .stream-row.attack { background: #fff5f5; border-color: #fecaca; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
+  .blockchain-hash { font-family: monospace; font-size: 11px; color: #0284c7; background: rgba(56,189,248,0.08); padding: 2px 7px; border-radius: 5px; }
+
+  .dataset-info { background: linear-gradient(135deg, rgba(56,189,248,0.06), rgba(14,165,233,0.04)); border: 1px solid rgba(56,189,248,0.2); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+  .dataset-tag { display: inline-flex; align-items: center; gap: 6px; background: rgba(56,189,248,0.12); color: #0284c7; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; font-family: 'Sora', sans-serif; margin-right: 8px; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<div class="alert-popup" id="alertPopup">
+  <div style="display:flex;align-items:flex-start;gap:12px;">
+    <div style="width:32px;height:32px;background:#fef2f2;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div>
+      <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:600;color:#0f3460;margin-bottom:3px;">Intrusion Detected</div>
+      <div style="font-size:12px;color:#64748b;" id="alertMsg"></div>
+    </div>
+    <button onclick="document.getElementById('alertPopup').style.display='none'" style="background:none;border:none;cursor:pointer;color:#94a3b8;margin-left:auto;padding:0;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div style="width:30px;height:30px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <span>QuantumShield</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <button class="nav-item active" onclick="showSection('dashboard', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="showSection('performance', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Performance
+    </button>
+    <div class="nav-section-label">Monitoring</div>
+    <button class="nav-item" onclick="showSection('monitoring', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Live Monitoring
+    </button>
+    <button class="nav-item" onclick="showSection('upload', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+      Upload CSV
+    </button>
+    <div class="nav-section-label">Blockchain</div>
+    <button class="nav-item" onclick="showSection('ledger', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      Blockchain Ledger
+    </button>
+    <div class="nav-section-label">Management</div>
+    <button class="nav-item" onclick="showSection('blocked', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      Blocked IPs
+    </button>
+    <button class="nav-item" onclick="showSection('reports', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Reports
+    </button>
+    <button class="nav-item" onclick="showSection('settings', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </button>
+  </div>
+  <div class="sidebar-footer">
+    <div style="padding:10px 12px;margin-bottom:6px;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:2px;">Signed in as</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.7);font-weight:500;" id="sidebarUsername">—</div>
+    </div>
+    <button class="logout-btn" onclick="handleLogout()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
+  </div>
+</div>
+
+<div class="main-content">
+
+  <!-- DASHBOARD -->
+  <section class="section active" id="sec-dashboard">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Real-time network security overview</div>
+      </div>
+      <div class="user-badge">
+        <div class="user-avatar" id="avatarInitial">A</div>
+        <span style="font-size:13px;font-weight:500;color:#0f3460;" id="topbarUsername">Admin</span>
+        <span class="pulse-dot" style="margin-left:4px;"></span>
+      </div>
+    </div>
+
+    <div class="dataset-info">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:#0f3460;margin-bottom:6px;">CICIOT2023 Dataset</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span class="dataset-tag">2.5 Million Training Samples</span>
+            <span class="dataset-tag">46 Network Features</span>
+            <span class="dataset-tag">12 Attack Classes</span>
+            <span class="dataset-tag">4-Qubit ZZFeatureMap</span>
+            <span class="dataset-tag">Binary Acc: 98.48%</span>
+            <span class="dataset-tag">Multi-class Acc: 92.92%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(56,189,248,0.1);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div class="stat-label">Total Requests</div>
+        <div class="stat-value" id="statTotal">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(239,68,68,0.08);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </div>
+        <div class="stat-label">Threats Detected</div>
+        <div class="stat-value" style="color:#dc2626;" id="statAttacks">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(34,197,94,0.1);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="stat-label">Normal Traffic</div>
+        <div class="stat-value" style="color:#16a34a;" id="statNormal">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(251,191,36,0.1);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        </div>
+        <div class="stat-label">Blocked IPs</div>
+        <div class="stat-value" style="color:#d97706;" id="statBlocked">—</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Recent Detections</span>
+          <span class="badge badge-connected" id="blockchainStatus">Checking...</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table>
+            <thead><tr><th>Time</th><th>IP Address</th><th>Attack Type</th><th>Score</th><th>Status</th></tr></thead>
+            <tbody id="recentDetections"><tr><td colspan="5" class="empty-state">No detections yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Attack Type Distribution</span></div>
+        <div class="card-body"><canvas id="attackTypeChart" height="220"></canvas></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Traffic Overview (Binary)</span></div>
+        <div class="card-body"><canvas id="overviewChart" height="200"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Detection Score Distribution</span></div>
+        <div class="card-body"><canvas id="scoreDistChart" height="200"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PERFORMANCE -->
+  <section class="section" id="sec-performance">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Performance</div>
+        <div class="page-sub">Model metrics, ROC curve and detection statistics</div>
+      </div>
+    </div>
+
+    <div class="dataset-info">
+      <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:#0f3460;margin-bottom:8px;">Training Configuration — CICIOT2023</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        <div style="background:white;border-radius:10px;padding:12px;border:1px solid rgba(56,189,248,0.15);">
+          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Training Samples</div>
+          <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:#0ea5e9;">25 Lakh</div>
+          <div style="font-size:11px;color:#94a3b8;">2,500,000 samples</div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:12px;border:1px solid rgba(56,189,248,0.15);">
+          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Quantum Qubits</div>
+          <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:#0ea5e9;">4</div>
+          <div style="font-size:11px;color:#94a3b8;">ZZFeatureMap</div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:12px;border:1px solid rgba(56,189,248,0.15);">
+          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Binary Accuracy</div>
+          <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:#16a34a;">98.48%</div>
+          <div style="font-size:11px;color:#94a3b8;">F1: 98.66%</div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:12px;border:1px solid rgba(56,189,248,0.15);">
+          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Multi-class Acc</div>
+          <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:#0ea5e9;">92.92%</div>
+          <div style="font-size:11px;color:#94a3b8;">12 attack classes</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="three-col" style="margin-bottom:20px;">
+      <div class="stat-card">
+        <div class="stat-label">Total Analyzed</div>
+        <div class="stat-value" id="perfTotal">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Attack Score</div>
+        <div class="stat-value" style="color:#dc2626;" id="perfAttackScore">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Normal Score</div>
+        <div class="stat-value" style="color:#16a34a;" id="perfNormalScore">—</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Attack Type Distribution</span></div>
+        <div class="card-body"><canvas id="perfAttackTypeChart" height="220"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">ROC Curve (Approximated from Live Data)</span></div>
+        <div class="card-body"><canvas id="rocChart" height="220"></canvas></div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Score Distribution — Attack vs Normal</span></div>
+        <div class="card-body"><canvas id="perfScoreChart" height="220"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Detection Confidence Histogram</span></div>
+        <div class="card-body"><canvas id="confidenceChart" height="220"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Model Information</span></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0f9ff;"><span style="font-size:13px;color:#64748b;">Architecture</span><span style="font-size:13px;font-weight:500;color:#0f3460;">Quantum-Enhanced XGBoost</span></div>
+            <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0f9ff;"><span style="font-size:13px;color:#64748b;">Quantum Library</span><span style="font-size:13px;font-weight:500;color:#0f3460;">Qiskit</span></div>
+            <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0f9ff;"><span style="font-size:13px;color:#64748b;">Feature Map</span><span style="font-size:13px;font-weight:500;color:#0f3460;">ZZFeatureMap (reps=2)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0f9ff;"><span style="font-size:13px;color:#64748b;">Qubits</span><span style="font-size:13px;font-weight:500;color:#0f3460;">4 (Entanglement: Full)</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="font-size:13px;color:#64748b;">Circuit Depth</span><span style="font-size:13px;font-weight:500;color:#0f3460;">31</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0f9ff;"><span style="font-size:13px;color:#64748b;">Dataset</span><span style="font-size:13px;font-weight:500;color:#0f3460;">CICIOT2023</span></div>
+            <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0f9ff;"><span style="font-size:13px;color:#64748b;">Training Samples</span><span style="font-size:13px;font-weight:600;color:#0ea5e9;">25 Lakh (2,500,000)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0f9ff;"><span style="font-size:13px;color:#64748b;">Total Dataset</span><span style="font-size:13px;font-weight:500;color:#0f3460;">78.4 Lakh (7,845,673)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0f9ff;"><span style="font-size:13px;color:#64748b;">Attack Classes</span><span style="font-size:13px;font-weight:500;color:#0f3460;">12</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="font-size:13px;color:#64748b;">Detection Threshold</span><span style="font-size:13px;font-weight:500;color:#0f3460;">0.5</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE MONITORING -->
+  <section class="section" id="sec-monitoring">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Live Monitoring</div>
+        <div class="page-sub">Stream network traffic through the Quantum ML detection pipeline</div>
+      </div>
+    </div>
+
+    <div class="dataset-info">
+      <div style="font-size:13px;color:#0284c7;font-family:'Sora',sans-serif;font-weight:500;margin-bottom:4px;">Simulation datasets sampled from CICIOT2023 — all 12 attack types represented</div>
+      <div style="font-size:12px;color:#64748b;">Each row processed through: StandardScaler → PCA(4) → Nystroem Quantum Enhancement → XGBoost Binary + Multi-class Classifier</div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header"><span class="card-title">Select Simulation Dataset</span></div>
+      <div class="card-body">
+        <div style="display:flex;gap:12px;align-items:flex-end;">
+          <div style="flex:1;">
+            <label class="form-label">Dataset File</label>
+            <select class="input-field" id="simFile"><option value="">Loading datasets...</option></select>
+          </div>
+          <button class="btn btn-primary" id="startBtn" onclick="startStream()">Start Monitoring</button>
+          <button class="btn btn-outline" id="stopBtn" onclick="stopStream()" disabled>Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Live Feed</span>
+          <span id="streamStatus" style="font-size:12px;color:#64748b;">Idle</span>
+        </div>
+        <div class="card-body" style="padding:14px;max-height:400px;overflow-y:auto;" id="streamFeed">
+          <div class="empty-state">Select a dataset and click Start Monitoring</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Session Summary</span></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div class="stat-card" style="box-shadow:none;"><div class="stat-label">Packets Processed</div><div class="stat-value" id="monTotal">0</div></div>
+            <div class="stat-card" style="box-shadow:none;border-color:rgba(239,68,68,0.2);"><div class="stat-label">Attacks Detected</div><div class="stat-value" style="color:#dc2626;" id="monAttacks">0</div></div>
+            <div class="stat-card" style="box-shadow:none;border-color:rgba(34,197,94,0.2);"><div class="stat-label">Normal Traffic</div><div class="stat-value" style="color:#16a34a;" id="monNormal">0</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Live Attack Type Breakdown</span></div>
+        <div class="card-body"><canvas id="liveAttackChart" height="220"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Live Score Timeline</span></div>
+        <div class="card-body"><canvas id="liveScoreChart" height="220"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- UPLOAD -->
+  <section class="section" id="sec-upload">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Upload CSV</div>
+        <div class="page-sub">Batch analyze network traffic from a CSV file</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Upload File</span></div>
+        <div class="card-body">
+          <div style="border:2px dashed #e0f2fe;border-radius:12px;padding:36px;text-align:center;margin-bottom:16px;cursor:pointer;transition:border-color 0.2s;" id="dropZone" onclick="document.getElementById('csvFile').click()" ondragover="event.preventDefault();this.style.borderColor='#38bdf8'" ondragleave="this.style.borderColor='#e0f2fe'" ondrop="handleDrop(event)">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            <div style="font-size:14px;color:#64748b;margin-bottom:4px;">Click to upload or drag and drop</div>
+            <div style="font-size:12px;color:#94a3b8;">CSV with 46 CICIOT2023 features required</div>
+            <input type="file" id="csvFile" accept=".csv" style="display:none;" onchange="handleFileSelect(this)">
+          </div>
+          <div id="fileInfo" style="display:none;padding:10px 14px;background:#f0f9ff;border-radius:9px;font-size:13px;color:#0284c7;margin-bottom:16px;"></div>
+          <button class="btn btn-primary" style="width:100%;" onclick="uploadAndAnalyze()" id="uploadBtn" disabled>Analyze File</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Analysis Results</span></div>
+        <div class="card-body" id="uploadResults"><div class="empty-state">Upload a CSV file to see results</div></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Attack Type Breakdown</span></div>
+        <div class="card-body"><canvas id="uploadAttackChart" height="220"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Score Distribution</span></div>
+        <div class="card-body"><canvas id="uploadScoreChart" height="220"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEDGER -->
+  <section class="section" id="sec-ledger">
+    <div class="topbar">
+      <div><div class="page-title">Blockchain Ledger</div><div class="page-sub">Immutable intrusion logs stored on Ethereum via Ganache</div></div>
+      <button class="btn btn-outline" onclick="loadLedger()">Refresh</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">On-Chain Intrusion Logs</span><span id="ledgerCount" style="font-size:13px;color:#64748b;">Loading...</span></div>
+      <div class="card-body" style="padding:0;">
+        <table>
+          <thead><tr><th>#</th><th>Timestamp</th><th>Attack Type</th><th>Data Hash</th><th>Confidence</th><th>IP Address</th></tr></thead>
+          <tbody id="ledgerTable"><tr><td colspan="6" class="empty-state">Loading blockchain logs...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCKED IPS -->
+  <section class="section" id="sec-blocked">
+    <div class="topbar"><div><div class="page-title">Blocked IPs</div><div class="page-sub">Manage blocked IP addresses</div></div></div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Block an IP Address</span></div>
+        <div class="card-body">
+          <div class="form-group"><label class="form-label">IP Address</label><input type="text" class="input-field" id="blockIpInput" placeholder="e.g. 192.168.1.100"></div>
+          <div class="form-group"><label class="form-label">Reason (optional)</label><input type="text" class="input-field" id="blockReasonInput" placeholder="e.g. Repeated DDoS attempts"></div>
+          <button class="btn btn-primary" style="width:100%;" onclick="blockIp()">Block IP</button>
+          <div id="blockMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Blocked IP List</span><button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="loadBlocked()">Refresh</button></div>
+        <div class="card-body" style="padding:0;">
+          <table>
+            <thead><tr><th>IP Address</th><th>Reason</th><th>Blocked At</th><th>Action</th></tr></thead>
+            <tbody id="blockedTable"><tr><td colspan="4" class="empty-state">No blocked IPs</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPORTS -->
+  <section class="section" id="sec-reports">
+    <div class="topbar">
+      <div><div class="page-title">Reports</div><div class="page-sub">Generate and download detection reports</div></div>
+      <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Generated Reports</span></div>
+      <div class="card-body" style="padding:0;">
+        <table>
+          <thead><tr><th>Generated At</th><th>Total Requests</th><th>Attacks</th><th>Normal</th><th>Download</th></tr></thead>
+          <tbody id="reportsTable"><tr><td colspan="5" class="empty-state">No reports generated yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="section" id="sec-settings">
+    <div class="topbar"><div><div class="page-title">Settings</div><div class="page-sub">Configure SMTP email alerts</div></div></div>
+    <div class="card" style="max-width:560px;">
+      <div class="card-header"><span class="card-title">Email Alert Configuration</span></div>
+      <div class="card-body">
+        <div class="form-group"><label class="form-label">Sender Email</label><input type="email" class="input-field" id="senderEmail" placeholder="alerts@gmail.com"></div>
+        <div class="form-group"><label class="form-label">App Password</label><input type="password" class="input-field" id="senderPassword" placeholder="Gmail app password"></div>
+        <div class="form-group"><label class="form-label">Recipient Email</label><input type="email" class="input-field" id="recipientEmail" placeholder="admin@example.com"></div>
+        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        <div id="settingsMsg" style="margin-top:14px;font-size:13px;display:none;padding:10px 14px;border-radius:9px;"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+const username = localStorage.getItem('username') || 'Admin';
+if (!token) { window.location.href = '/login'; }
+document.getElementById('sidebarUsername').textContent = username;
+document.getElementById('topbarUsername').textContent = username;
+document.getElementById('avatarInitial').textContent = username.charAt(0).toUpperCase();
+
+const ATTACK_COLORS = {
+  'BenignTraffic': '#22c55e',
+  'DDoS-ICMP_Flood': '#ef4444',
+  'DDoS-PSHACK_Flood': '#f97316',
+  'DDoS-RSTFINFlood': '#eab308',
+  'DDoS-SYN_Flood': '#dc2626',
+  'DDoS-SynonymousIP_Flood': '#7c3aed',
+  'DDoS-TCP_Flood': '#db2777',
+  'DDoS-UDP_Flood': '#ea580c',
+  'DoS-SYN_Flood': '#b91c1c',
+  'DoS-TCP_Flood': '#c2410c',
+  'DoS-UDP_Flood': '#a16207',
+  'Other_Attack': '#6b7280'
+};
+
+function showSection(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'performance') loadPerformance();
+  if (name === 'ledger') loadLedger();
+  if (name === 'blocked') loadBlocked();
+  if (name === 'reports') loadReports();
+  if (name === 'settings') loadSettings();
+  if (name === 'monitoring') loadDatasets();
+}
+
+async function apiFetch(url, opts = {}) {
+  opts.headers = { ...(opts.headers || {}), 'Authorization': token, 'Content-Type': 'application/json' };
+  const res = await fetch(url, opts);
+  return res.json();
+}
+
+function getAttackTypeCounts(detections) {
+  const counts = {};
+  detections.forEach(d => {
+    const type = d.attack_type || (d.is_attack ? 'Unknown_Attack' : 'BenignTraffic');
+    counts[type] = (counts[type] || 0) + 1;
+  });
+  return counts;
+}
+
+async function loadDashboard() {
+  try {
+    const data = await apiFetch('/api/monitor/stats');
+    if (data.success) {
+      document.getElementById('statTotal').textContent = data.stats.total_requests;
+      document.getElementById('statAttacks').textContent = data.stats.total_attacks;
+      document.getElementById('statNormal').textContent = data.stats.total_normal;
+      document.getElementById('statBlocked').textContent = data.stats.blocked_ips;
+    }
+    const det = await apiFetch('/api/monitor/detections?limit=200');
+    if (det.success) {
+      renderRecentDetections(det.detections.slice(0, 10));
+      renderAttackTypeChart(det.detections, 'attackTypeChart');
+      renderOverviewChart(data.stats);
+      renderScoreDistChart(det.detections, 'scoreDistChart');
+    }
+    const ledger = await apiFetch('/api/ledger/status');
+    document.getElementById('blockchainStatus').textContent = ledger.connected ? 'Blockchain Connected' : 'Blockchain Offline';
+    document.getElementById('blockchainStatus').className = 'badge ' + (ledger.connected ? 'badge-connected' : 'badge-attack');
+  } catch(e) {}
+}
+
+function renderRecentDetections(detections) {
+  const tbody = document.getElementById('recentDetections');
+  if (!detections.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No detections yet</td></tr>'; return; }
+  tbody.innerHTML = detections.map(d => `
+    <tr>
+      <td>${new Date(d.timestamp).toLocaleTimeString()}</td>
+      <td style="font-family:monospace;font-size:12px;">${d.ip_address || '—'}</td>
+      <td><span style="font-size:11px;font-weight:600;color:${ATTACK_COLORS[d.attack_type] || '#6b7280'};">${d.attack_type || '—'}</span></td>
+      <td>${(d.score * 100).toFixed(1)}%</td>
+      <td><span class="badge ${d.is_attack ? 'badge-attack' : 'badge-normal'}">${d.is_attack ? 'Attack' : 'Normal'}</span></td>
+    </tr>
+  `).join('');
+}
+
+let attackTypeChartInst = null;
+function renderAttackTypeChart(detections, canvasId) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  const counts = getAttackTypeCounts(detections);
+  const labels = Object.keys(counts);
+  const values = Object.values(counts);
+  const colors = labels.map(l => ATTACK_COLORS[l] || '#6b7280');
+  if (attackTypeChartInst && canvasId === 'attackTypeChart') attackTypeChartInst.destroy();
+  const inst = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 }, padding: 10 } } } }
+  });
+  if (canvasId === 'attackTypeChart') attackTypeChartInst = inst;
+  return inst;
+}
+
+let overviewChartInst = null;
+function renderOverviewChart(stats) {
+  const ctx = document.getElementById('overviewChart');
+  if (!ctx) return;
+  if (overviewChartInst) overviewChartInst.destroy();
+  overviewChartInst = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: ['Normal Traffic', 'Threats Detected'], datasets: [{ data: [stats.total_normal || 0, stats.total_attacks || 0], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 0 }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans' }, padding: 16 } } } }
+  });
+}
+
+let scoreDistChartInst = null;
+function renderScoreDistChart(detections, canvasId) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  const buckets = Array(10).fill(0);
+  detections.forEach(d => { const b = Math.min(Math.floor(d.score * 10), 9); buckets[b]++; });
+  const labels = ['0-10%','10-20%','20-30%','30-40%','40-50%','50-60%','60-70%','70-80%','80-90%','90-100%'];
+  if (scoreDistChartInst) scoreDistChartInst.destroy();
+  scoreDistChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Detections', data: buckets, backgroundColor: buckets.map((_, i) => i >= 5 ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'), borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f0f9ff' } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+  });
+}
+
+async function loadPerformance() {
+  try {
+    const data = await apiFetch('/api/monitor/stats');
+    if (data.success) document.getElementById('perfTotal').textContent = data.stats.total_requests;
+    const det = await apiFetch('/api/monitor/detections?limit=1000');
+    if (det.success) {
+      const attacks = det.detections.filter(d => d.is_attack);
+      const normals = det.detections.filter(d => !d.is_attack);
+      document.getElementById('perfAttackScore').textContent = attacks.length ? (attacks.reduce((s,d) => s+d.score,0)/attacks.length).toFixed(4) : '—';
+      document.getElementById('perfNormalScore').textContent = normals.length ? (normals.reduce((s,d) => s+d.score,0)/normals.length).toFixed(4) : '—';
+      renderAttackTypeChart(det.detections, 'perfAttackTypeChart');
+      renderROCChart(det.detections);
+      renderPerfScoreChart(attacks, normals);
+      renderConfidenceChart(det.detections);
+    }
+  } catch(e) {}
+}
+
+let rocChartInst = null;
+function renderROCChart(detections) {
+  const ctx = document.getElementById('rocChart');
+  if (!ctx) return;
+  if (rocChartInst) rocChartInst.destroy();
+  if (detections.length < 2) {
+    rocChartInst = new Chart(ctx, { type: 'line', data: { labels: ['0','1'], datasets: [{ label: 'ROC Curve', data: [{x:0,y:0},{x:1,y:1}], borderColor: '#94a3b8', borderDash: [5,5] }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+    return;
+  }
+  const thresholds = Array.from({length: 21}, (_, i) => i / 20);
+  const fprArr = [], tprArr = [];
+  const positives = detections.filter(d => d.is_attack).length;
+  const negatives = detections.length - positives;
+  thresholds.forEach(t => {
+    const tp = detections.filter(d => d.is_attack && d.score >= t).length;
+    const fp = detections.filter(d => !d.is_attack && d.score >= t).length;
+    fprArr.push(negatives > 0 ? fp/negatives : 0);
+    tprArr.push(positives > 0 ? tp/positives : 0);
+  });
+  const rocData = fprArr.map((f, i) => ({ x: parseFloat(f.toFixed(3)), y: parseFloat(tprArr[i].toFixed(3)) }));
+  const auc = rocData.reduce((sum, _, i) => i === 0 ? sum : sum + Math.abs(rocData[i].x - rocData[i-1].x) * (rocData[i].y + rocData[i-1].y) / 2, 0);
+  rocChartInst = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: `ROC Curve (AUC ≈ ${auc.toFixed(3)})`, data: rocData, showLine: true, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.1)', pointRadius: 3, fill: true },
+        { label: 'Random Classifier', data: [{x:0,y:0},{x:1,y:1}], showLine: true, borderColor: '#94a3b8', borderDash: [5,5], pointRadius: 0 }
+      ]
+    },
+    options: { responsive: true, scales: { x: { title: { display: true, text: 'False Positive Rate' }, min: 0, max: 1 }, y: { title: { display: true, text: 'True Positive Rate' }, min: 0, max: 1 } }, plugins: { legend: { labels: { font: { family: 'DM Sans', size: 11 } } } } }
+  });
+}
+
+let perfScoreChartInst = null;
+function renderPerfScoreChart(attacks, normals) {
+  const ctx = document.getElementById('perfScoreChart');
+  if (!ctx) return;
+  if (perfScoreChartInst) perfScoreChartInst.destroy();
+  const aBuckets = Array(10).fill(0);
+  const nBuckets = Array(10).fill(0);
+  attacks.forEach(d => { const b = Math.min(Math.floor(d.score*10),9); aBuckets[b]++; });
+  normals.forEach(d => { const b = Math.min(Math.floor(d.score*10),9); nBuckets[b]++; });
+  const labels = ['0-0.1','0.1-0.2','0.2-0.3','0.3-0.4','0.4-0.5','0.5-0.6','0.6-0.7','0.7-0.8','0.8-0.9','0.9-1.0'];
+  perfScoreChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Attack', data: aBuckets, backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: 4 }, { label: 'Normal', data: nBuckets, backgroundColor: 'rgba(34,197,94,0.7)', borderRadius: 4 }] },
+    options: { responsive: true, scales: { y: { beginAtZero: true, grid: { color: '#f0f9ff' } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } }, plugins: { legend: { labels: { font: { family: 'DM Sans', size: 11 } } } } }
+  });
+}
+
+let confidenceChartInst = null;
+function renderConfidenceChart(detections) {
+  const ctx = document.getElementById('confidenceChart');
+  if (!ctx) return;
+  if (confidenceChartInst) confidenceChartInst.destroy();
+  const buckets = Array(10).fill(0);
+  detections.filter(d => d.is_attack).forEach(d => { const b = Math.min(Math.floor((d.score)*10),9); buckets[b]++; });
+  const labels = ['0-10%','10-20%','20-30%','30-40%','40-50%','50-60%','60-70%','70-80%','80-90%','90-100%'];
+  confidenceChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Attack Confidence', data: buckets, backgroundColor: 'rgba(220,38,38,0.7)', borderRadius: 6 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f0f9ff' } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+  });
+}
+
+async function loadDatasets() {
+  try {
+    const data = await apiFetch('/api/monitor/datasets');
+    const sel = document.getElementById('simFile');
+    sel.innerHTML = data.files.map(f => `<option value="${f}">${f}</option>`).join('');
+  } catch(e) {}
+}
+
+let liveAttackCounts = {};
+let liveScoreData = [];
+let liveAttackChartInst = null;
+let liveScoreChartInst = null;
+let eventSource = null;
+
+function startStream() {
+  const file = document.getElementById('simFile').value;
+  if (!file) return;
+  document.getElementById('streamFeed').innerHTML = '';
+  document.getElementById('monTotal').textContent = 0;
+  document.getElementById('monAttacks').textContent = 0;
+  document.getElementById('monNormal').textContent = 0;
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('stopBtn').disabled = false;
+  document.getElementById('streamStatus').textContent = 'Streaming...';
+  document.getElementById('streamStatus').style.color = '#16a34a';
+  liveAttackCounts = {};
+  liveScoreData = [];
+
+  let total = 0, attacks = 0, normals = 0;
+  eventSource = new EventSource(`/api/monitor/stream?token=${token}&file=${file}`);
+  eventSource.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+    if (d.done) { stopStream(); return; }
+    total++;
+    const aType = d.attack_type || (d.is_attack ? 'Unknown' : 'BenignTraffic');
+    liveAttackCounts[aType] = (liveAttackCounts[aType] || 0) + 1;
+    liveScoreData.push(d.score);
+    if (liveScoreData.length > 50) liveScoreData.shift();
+    if (d.is_attack) {
+      attacks++;
+      showAlertPopup(`IP ${d.ip} | ${d.attack_type} | Score: ${(d.score*100).toFixed(1)}%`);
+    } else { normals++; }
+    document.getElementById('monTotal').textContent = total;
+    document.getElementById('monAttacks').textContent = attacks;
+    document.getElementById('monNormal').textContent = normals;
+    updateLiveAttackChart();
+    updateLiveScoreChart();
+    const row = document.createElement('div');
+    row.className = 'stream-row' + (d.is_attack ? ' attack' : '');
+    row.innerHTML = `
+      <span style="font-family:monospace;font-size:12px;">${d.ip}</span>
+      <span style="font-size:11px;font-weight:600;color:${ATTACK_COLORS[d.attack_type] || '#6b7280'};">${d.attack_type || 'BenignTraffic'}</span>
+      <span style="font-size:12px;color:#64748b;">${(d.score*100).toFixed(1)}%</span>
+      <span class="badge ${d.is_attack ? 'badge-attack' : 'badge-normal'}">${d.is_attack ? 'Attack' : 'Normal'}</span>
+      ${d.tx_hash ? `<span class="blockchain-hash">${d.tx_hash.slice(0,12)}...</span>` : ''}
+    `;
+    const feed = document.getElementById('streamFeed');
+    feed.insertBefore(row, feed.firstChild);
+  };
+  eventSource.onerror = () => stopStream();
+}
+
+function stopStream() {
+  if (eventSource) { eventSource.close(); eventSource = null; }
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('stopBtn').disabled = true;
+  document.getElementById('streamStatus').textContent = 'Stopped';
+  document.getElementById('streamStatus').style.color = '#64748b';
+}
+
+function updateLiveAttackChart() {
+  const ctx = document.getElementById('liveAttackChart');
+  if (!ctx) return;
+  const labels = Object.keys(liveAttackCounts);
+  const values = Object.values(liveAttackCounts);
+  const colors = labels.map(l => ATTACK_COLORS[l] || '#6b7280');
+  if (liveAttackChartInst) liveAttackChartInst.destroy();
+  liveAttackChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f0f9ff' } }, x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } } } }
+  });
+}
+
+function updateLiveScoreChart() {
+  const ctx = document.getElementById('liveScoreChart');
+  if (!ctx) return;
+  if (liveScoreChartInst) liveScoreChartInst.destroy();
+  liveScoreChartInst = new Chart(ctx, {
+    type: 'line',
+    data: { labels: liveScoreData.map((_,i) => i+1), datasets: [{ label: 'Score', data: liveScoreData, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.08)', fill: true, tension: 0.4, pointRadius: 2 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 1, grid: { color: '#f0f9ff' } }, x: { grid: { display: false } } } }
+  });
+}
+
+function showAlertPopup(msg) {
+  document.getElementById('alertMsg').textContent = msg;
+  const popup = document.getElementById('alertPopup');
+  popup.style.display = 'block';
+  setTimeout(() => { popup.style.display = 'none'; }, 5000);
+}
+
+let selectedFile = null;
+function handleFileSelect(input) {
+  selectedFile = input.files[0];
+  if (selectedFile) {
+    document.getElementById('fileInfo').style.display = 'block';
+    document.getElementById('fileInfo').textContent = `Selected: ${selectedFile.name} (${(selectedFile.size/1024).toFixed(1)} KB)`;
+    document.getElementById('uploadBtn').disabled = false;
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) {
+    selectedFile = file;
+    document.getElementById('fileInfo').style.display = 'block';
+    document.getElementById('fileInfo').textContent = `Selected: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+    document.getElementById('uploadBtn').disabled = false;
+  }
+}
+
+let uploadAttackChartInst = null;
+let uploadScoreChartInst = null;
+
+async function uploadAndAnalyze() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true; btn.textContent = 'Analyzing...';
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+  try {
+    const res = await fetch('/api/upload/analyze', { method: 'POST', headers: { 'Authorization': token }, body: formData });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('uploadResults').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div class="stat-card" style="box-shadow:none;"><div class="stat-label">Total</div><div class="stat-value">${data.total}</div></div>
+          <div class="stat-card" style="box-shadow:none;border-color:rgba(239,68,68,0.2);"><div class="stat-label">Attacks</div><div class="stat-value" style="color:#dc2626;">${data.attacks}</div></div>
+          <div class="stat-card" style="box-shadow:none;border-color:rgba(34,197,94,0.2);"><div class="stat-label">Normal</div><div class="stat-value" style="color:#16a34a;">${data.normal}</div></div>
+        </div>
+        <div style="max-height:260px;overflow-y:auto;">
+          ${data.results.slice(0,20).map(r => `
+            <div class="stream-row ${r.is_attack ? 'attack' : ''}">
+              <span style="font-family:monospace;font-size:12px;">${r.ip}</span>
+              <span style="font-size:11px;font-weight:600;color:${ATTACK_COLORS[r.attack_type] || '#6b7280'};">${r.attack_type || 'BenignTraffic'}</span>
+              <span style="font-size:12px;color:#64748b;">${(r.score*100).toFixed(1)}%</span>
+              <span class="badge ${r.is_attack ? 'badge-attack' : 'badge-normal'}">${r.is_attack ? 'Attack' : 'Normal'}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      const counts = {};
+      data.results.forEach(r => { const t = r.attack_type || (r.is_attack ? 'Unknown' : 'BenignTraffic'); counts[t] = (counts[t]||0)+1; });
+      const labels = Object.keys(counts);
+      const values = Object.values(counts);
+      const colors = labels.map(l => ATTACK_COLORS[l] || '#6b7280');
+      if (uploadAttackChartInst) uploadAttackChartInst.destroy();
+      uploadAttackChartInst = new Chart(document.getElementById('uploadAttackChart'), {
+        type: 'bar',
+        data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 6 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f0f9ff' } }, x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } } } }
+      });
+      const buckets = Array(10).fill(0);
+      data.results.forEach(r => { const b = Math.min(Math.floor(r.score*10),9); buckets[b]++; });
+      if (uploadScoreChartInst) uploadScoreChartInst.destroy();
+      uploadScoreChartInst = new Chart(document.getElementById('uploadScoreChart'), {
+        type: 'bar',
+        data: { labels: ['0-10%','10-20%','20-30%','30-40%','40-50%','50-60%','60-70%','70-80%','80-90%','90-100%'], datasets: [{ data: buckets, backgroundColor: buckets.map((_,i) => i>=5 ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'), borderRadius: 6 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f0f9ff' } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+      });
+    } else {
+      document.getElementById('uploadResults').innerHTML = `<div style="color:#dc2626;font-size:14px;">${data.message}</div>`;
+    }
+  } catch(e) {
+    document.getElementById('uploadResults').innerHTML = `<div style="color:#dc2626;font-size:14px;">Upload failed.</div>`;
+  }
+  btn.disabled = false; btn.textContent = 'Analyze File';
+}
+
+async function loadLedger() {
+  try {
+    const data = await apiFetch('/api/ledger');
+    const tbody = document.getElementById('ledgerTable');
+    document.getElementById('ledgerCount').textContent = `${data.count || 0} records`;
+    if (!data.logs || !data.logs.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No blockchain logs yet</td></tr>'; return; }
+    tbody.innerHTML = data.logs.map(l => `
+      <tr>
+        <td>${l.id}</td>
+        <td>${new Date(l.timestamp * 1000).toLocaleString()}</td>
+        <td><span style="font-size:11px;font-weight:600;color:${ATTACK_COLORS[l.attackType] || '#6b7280'};">${l.attackType}</span></td>
+        <td><span class="blockchain-hash">${l.dataHash}</span></td>
+        <td>${l.confidence}%</td>
+        <td style="font-family:monospace;font-size:12px;">${l.ipAddress}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    document.getElementById('ledgerTable').innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load blockchain logs</td></tr>';
+  }
+}
+
+async function loadBlocked() {
+  try {
+    const data = await apiFetch('/api/blocked');
+    const tbody = document.getElementById('blockedTable');
+    if (!data.blocked_ips.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No blocked IPs</td></tr>'; return; }
+    tbody.innerHTML = data.blocked_ips.map(ip => `
+      <tr>
+        <td style="font-family:monospace;font-size:13px;">${ip.ip_address}</td>
+        <td>${ip.reason || '—'}</td>
+        <td>${new Date(ip.blocked_at).toLocaleString()}</td>
+        <td><button class="btn btn-danger" style="padding:5px 12px;font-size:12px;" onclick="unblockIp('${ip.ip_address}')">Unblock</button></td>
+      </tr>
+    `).join('');
+  } catch(e) {}
+}
+
+async function blockIp() {
+  const ip = document.getElementById('blockIpInput').value.trim();
+  const reason = document.getElementById('blockReasonInput').value.trim();
+  if (!ip) return;
+  try {
+    const data = await apiFetch('/api/blocked', { method: 'POST', body: JSON.stringify({ ip_address: ip, reason }) });
+    const msg = document.getElementById('blockMsg');
+    msg.style.display = 'block'; msg.style.color = data.success ? '#16a34a' : '#dc2626'; msg.textContent = data.message;
+    if (data.success) { document.getElementById('blockIpInput').value = ''; document.getElementById('blockReasonInput').value = ''; loadBlocked(); }
+  } catch(e) {}
+}
+
+async function unblockIp(ip) {
+  try { await apiFetch(`/api/blocked/${encodeURIComponent(ip)}`, { method: 'DELETE' }); loadBlocked(); } catch(e) {}
+}
+
+async function loadReports() {
+  try {
+    const data = await apiFetch('/api/reports');
+    const tbody = document.getElementById('reportsTable');
+    if (!data.reports.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No reports generated yet</td></tr>'; return; }
+    tbody.innerHTML = data.reports.map(r => `
+      <tr>
+        <td>${new Date(r.generated_at).toLocaleString()}</td>
+        <td>${r.total_requests}</td>
+        <td>${r.total_attacks}</td>
+        <td>${r.total_requests - r.total_attacks}</td>
+        <td><a href="/api/reports/download/${r.filename}?token=${token}" class="btn btn-outline" style="padding:5px 12px;font-size:12px;text-decoration:none;">Download</a></td>
+      </tr>
+    `).join('');
+  } catch(e) {}
+}
+
+async function generateReport() {
+  try { const data = await apiFetch('/api/reports/generate', { method: 'POST' }); if (data.success) loadReports(); } catch(e) {}
+}
+
+async function loadSettings() {
+  try {
+    const data = await apiFetch('/api/settings/smtp');
+    if (data.success) { document.getElementById('senderEmail').value = data.sender_email || ''; document.getElementById('recipientEmail').value = data.recipient_email || ''; }
+  } catch(e) {}
+}
+
+async function saveSettings() {
+  const sender = document.getElementById('senderEmail').value.trim();
+  const password = document.getElementById('senderPassword').value.trim();
+  const recipient = document.getElementById('recipientEmail').value.trim();
+  if (!sender || !password || !recipient) return;
+  try {
+    const data = await apiFetch('/api/settings/smtp', { method: 'POST', body: JSON.stringify({ sender_email: sender, sender_password: password, recipient_email: recipient }) });
+    const msg = document.getElementById('settingsMsg');
+    msg.style.display = 'block'; msg.style.background = data.success ? '#f0fdf4' : '#fef2f2'; msg.style.color = data.success ? '#16a34a' : '#dc2626'; msg.textContent = data.message;
+  } catch(e) {}
+}
+
+async function handleLogout() {
+  try { await apiFetch('/api/logout', { method: 'POST' }); } catch(e) {}
+  localStorage.removeItem('token'); localStorage.removeItem('username');
+  window.location.href = '/login';
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
